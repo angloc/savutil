@@ -1,27 +1,14 @@
-<html>
-<head>
-  <meta http-equiv="content-type" content="text/html; charset=iso-8859-1">
-  <title>Readme for SAV2SSS</title>
-  <meta name="generator" content="Amaya, see http://www.w3.org/Amaya/">
-</head>
+# savutil - converting SPSS .sav file data to open formats
 
-<body>
-<h1>SAV2SSS - SPSS .sav file to Triple-S XML convertor - version 0.9</h1>
+The sav2util utilities convert an SPSS® .sav file to Triple-S XML metadata and
+data with an intermediary JSON format.</p>
 
-<p>The sav2sss utility converts an SPSS® .sav file to Triple-S XML metadata and
-data.</p>
+savutil is based on the Windows DLL provided by IBM for programmed access to SAV files.
 
-<p>sav2sss is written based on the description of the .sav file format to be
-found in the <a
-href="http://cvs.savannah.gnu.org/viewvc/*checkout*/pspp/doc/dev/system-file-format.texi?root=pspp&amp;revision=1.2&amp;content-type=text%2Fplain">PSPP
-documentation.</a></p>
+savutil comprises two programs:
 
-<p>The description is unsupported and unendorsed by IBM® SPSS® and the results
-cannot be warranted in any way.</p>
-
-<p>sav2sss with the &#x2018;full&#x2019; option produces a frequency
-distribution of data values, which may be checked against known totals for the
-dataset.</p>
+* sav2json - converts a SAV file into an intermediate JSON format
+* json2sss - converts a JSON file created by sav2json into Triple-S data set
 
 <p>sav2sss produces up to three output files. They are named after the input
 file, with different extensions:</p>
@@ -33,40 +20,26 @@ file, with different extensions:</p>
     file contains documentation text</em></li>
 </ul>
 
-<h2>Installation on Windows</h2>
+## Installation on Windows
 
-<p>Download the sav2sss executable into a folder of your own choice, let's say
-&lt;some-folder&gt;</p>
+Download the two executables from this github project into a folder of your own
+choice, let's say <some-folder>. Both programs must be executed from a command
+prompt.
 
-<p>NB: If not installed already (they almost certainly are on a modern Windows
-system) your system requires the <a
-href="http://www.microsoft.com/en-us/download/details.aspx?id=29">Microsoft
-Visual C 2008 runtime DLLs</a>.</p>
+## Running sav2json
 
-<h2>Running sav2sss</h2>
+```
+<some-folder>\sav2json [switches] SAV-file
+```
+Switches taking no value:
 
-<p>sav2sss must be executed from a command prompt:</p>
-<pre>&lt;some-folder&gt;\sav2sss [-ooutputEncoding] [switches] SAV-file</pre>
-
-<p>Switches taking no value:</p>
-<ul>
-  <li>The -v switch if specified displays the savschema version number.</li>
-  <li>The -s switch disables "sensible string lengths". This is a default
+* The -v switch if specified displays the sav2json version number.
+* The -s switch disables "sensible string lengths". This is a default
     option useful for data sets coming from Quancept ® which may have extremely
     long string variable lengths. By default each long string variable is
     reduced to a length no greater than the next power of 2 greater than the
-    maximum size found in the file for that variable.</li>
-  <li>The -f switch enables "full" output that includes:
-    <ul>
-      <li>A description of the information about each variable found in the
-      file</li>
-      <li>A listing of the value labels found in the file</li>
-      <li>A frequency distribution for the variables in the file</li>
-    </ul>
-  </li>
-  <li>The -c switch specifies the output file should be a comma-separated
-  file.</li>
-</ul>
+    maximum size found in the file for that variable.
+* The -c switch specifies a comma-separated (CSV) file should be created containing the output data.
 
 <p>Switches requiring a value. NB: values are terminated by the next space or
 hyphen. <em>To include a space or hypen in a value, enclose the switch and
