@@ -28,45 +28,49 @@ prompt.
 
 ## Running sav2json
 
-```
-<some-folder>\sav2json [switches] SAV-file
-```
-Switches taking no value:
+### The sav2json command line
 
+```
+<some-folder>\sav2json [switches] <SAV-file>
+```
+
+where <SAV-file> is the path to and name of the SAV file to be converted.
+
+#### Switches taking no value:
+
+* The -c switch if specified forces output of a CSV file
+* The -d switch if specified includes the data in the JSON file as well as
+  the descriptions of the variables. This is mandatory if json2sss is to be run
+  afterwards.
+* The -h switch if specified includes a header line in the CSV file
+* The -i switch if specified causes values in the CSV file if generated to
+  be replaced by their SPSS value labels if available
+* The -p switch if specified causes the JSON output to be "pretty-printed" for
+  readable. By default the JSON is compact.
+* The -t switch if specified causes any descriptive text in the SAV file to be written
+  to a text file - 
 * The -v switch if specified displays the sav2json version number.
-* The -s switch disables "sensible string lengths". This is a default
+
+#### Switches requiring a value.
+
+NB: values are terminated by the next space or
+hyphen. <em>To include a space or hypen in a value, enclose the switch and
+value in double quotes, e.g. "-tMy title"</em>
+
+<ul>
+  <li>The -e switch specifies the encoding to be used in the CSV file if generated,
+    by default cp-1252 (which should be fine for Windows
+    users in almost all locales). The JSON file is always encoded in UTF-8 as this
+    is part of the JSON specification.</li>
+  <li>The -o switch specifies the path and root file name for the output files. By default
+  the output files (.json, .csv, .txt) have the same path and name as the SAV file.</li>
+</ul>
+<ul>
+  <li>The -s switch disables "sensible string lengths". This is a default
     option useful for data sets coming from Quancept ® which may have extremely
     long string variable lengths. By default each long string variable is
     reduced to a length no greater than the next power of 2 greater than the
     maximum size found in the file for that variable.
-* The -c switch specifies a comma-separated (CSV) file should be created containing the output data.
-
-<p>Switches requiring a value. NB: values are terminated by the next space or
-hyphen. <em>To include a space or hypen in a value, enclose the switch and
-value in double quotes, e.g. "-tMy title"</em></p>
-<ul>
-  <li>The -o switch specifies the encoding to be used in the output data file,
-    by default cp-1252 (which should be fine for English-speaking Windows
-    users).</li>
-  <li>The -i switch may be used to specify the record Ident for the Triple-S
-    specification; it should be a single Latin character A-Z. The default is
-  A.</li>
-  <li>The -y switch specifies the label used for Yes answers (default Yes)</li>
-  <li>The -n switch specifies the label used for No answers (default No)</li>
-  <li>The -a switch specifies the delimiter between a varying prefix and an
-    unvarying suffix in labels of component variables of multiples. If there
-    are no variables composed in this way in the file, use a blank. Default is
-    blank, i.e. "-a "; <em>note that quotes are required</em>.</li>
-  <li>The -b switch specifies the delimiter between an unvarying prefix and a
-    varying suffix in labels of component variables of multiples. If there are
-    no variables composed in this way in the file, use a blank. Default is
-    colon, i.e.. -b:</li>
-  <li>The -m switch specifies the answer labels used for 1st answer, 2nd answer
-    etctera in spread multiples. The default is "-m:1st answer,:2nd answer,:3rd
-    answer,:4th answer,:5th answer,:6th answer,:7th answer,:8th answer". This
-    allows spread multiple variables to be distinguised from grids. Specify as
-    many answers as there may be responses to any of the spread multiples in
-    the .sav file.</li>
   <li>The -x switch can be used to specify the value of the 'user' element in
     the XML file. The value should not contain a semicolon (';') character.
     Note that switches whose values contain spaces should be enclosed in double
@@ -74,7 +78,7 @@ value in double quotes, e.g. "-tMy title"</em></p>
     by default. </li>
   <li>The -h switch is used to specify an href attribute for the &lt;record&gt;
     element. By default sav2sss includes an href which is a relative reference
-    to the .asc file. To exclude the href use
+    to the .asc file. To exclude the href altogether use
     <pre>"-h "</pre>
   </li>
   <li>The -t switch is used to specify contents of either of the &lt;name&gt;
@@ -92,6 +96,15 @@ value in double quotes, e.g. "-tMy title"</em></p>
   </p>
   </li>
 
+## Example
+
+```
+sav2json -dp survey
+```
+
+Converts the file survey.sav in the current working directory creating
+the file survey.json, including the data values and formatting the JSON for
+readability.
 
 </ul>
 
@@ -259,31 +272,25 @@ features of sav2sss that create Triple-S multiple variables.</p>
 
 <h2>Using the source (for Python developers)</h2>
 
+savutil was developed with Python 2.7.
+
 <h4>Prequisites</h4>
 
-<p>sav2sss requires the XML library <a
-href="http://xmlsoft.org/python.html">libxml2</a> ( and specifically these <a
-href="http://users.skynet.be/sbi/libxml-python/">Python bindings</a>).</p>
-
+sav2json uses the file savdllwrapper.py which was developed by  
 <h4>Testing</h4>
 
-<p>To run sav2sss in the interpreter run the script savschema.py</p>
+<p>To run sav2sss in the Python interpreter
+run the scripts sav2json.py and json2sss.py</p>
 
 <h4>Building</h4>
 <ol>
-  <li>Download the sources</li>
+  <li>Download the sources.</li>
   <li>Building the Windows executable requires the <a
     href="http://www.py2exe.org/">py2exe library</a>. </li>
   <li><strong>Review the script setup.bat for its suitability on your
     system</strong>.</li>
-  <li>Execute setup.bat to create sav2sss.exe and readme.html in a subfolder
+  <li>Execute setup.bat to create sav2json.exe, json2sss.exe and readme.html in a subfolder
     .\output</li>
 </ol>
-
-<p></p>
-
-<p></p>
-
-<p></p>
 </body>
 </html>

@@ -10,7 +10,6 @@
 #	Diversity of date-time formats
 #	Encoding issues - JSON is output by default as ASCII with individual non-ASCII codes escaped
 
-import contextlib
 import itertools
 import exceptions
 import math
