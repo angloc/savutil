@@ -1,7 +1,9 @@
 # savutil - converting SPSS .sav file data to open formats
 
 The sav2util utilities convert an SPSS® .sav file to Triple-S XML metadata and
-data with an intermediary JSON format.</p>
+data with an intermediary JSON format. Triple-S is imported by a wide range of
+survey data analysis software, and JSON is a convenient platform for taking
+SPSS data into the modern "big-data" world.
 
 savutil is based on the Windows DLL provided by IBM for programmed access to SAV files.
 
@@ -10,19 +12,9 @@ savutil comprises two programs:
 * sav2json - converts a SAV file into an intermediate JSON format
 * json2sss - converts a JSON file created by sav2json into Triple-S data set
 
-<p>sav2sss produces up to three output files. They are named after the input
-file, with different extensions:</p>
-<ul>
-  <li>XML schema file: <em>sav-file-name</em>.xml</li>
-  <li>Data file: <em>sav-file-name</em>.asc (fixed-format mode) or .csv (CSV
-    mode)</li>
-  <li>Documentation file: <em>sav-file-name</em>.txt - <em>only if the .sav
-    file contains documentation text</em></li>
-</ul>
-
 ## Installation on Windows
 
-Download the two executables from this github project into a folder of your own
+Download the two executables sav2json.exe and json2sss.exe from this github project into a folder of your own
 choice, let's say <some-folder>. Both programs must be executed from a command
 prompt.
 
@@ -36,7 +28,7 @@ prompt.
 
 where <SAV-file> is the path to and name of the SAV file to be converted.
 
-#### Switches taking no value:
+#### Switches taking no value
 
 * The -c switch if specified forces output of a CSV file
 * The -d switch if specified includes the data in the JSON file as well as
@@ -46,40 +38,75 @@ where <SAV-file> is the path to and name of the SAV file to be converted.
 * The -i switch if specified causes values in the CSV file if generated to
   be replaced by their SPSS value labels if available
 * The -p switch if specified causes the JSON output to be "pretty-printed" for
-  readable. By default the JSON is compact.
+  readability. By default the JSON is compact.
 * The -t switch if specified causes any descriptive text in the SAV file to be written
-  to a text file - 
+  to a text file
 * The -v switch if specified displays the sav2json version number.
 
-#### Switches requiring a value.
+#### Switches requiring a value
 
 NB: values are terminated by the next space or
 hyphen. <em>To include a space or hypen in a value, enclose the switch and
 value in double quotes, e.g. "-tMy title"</em>
 
 <ul>
-  <li>The -e switch specifies the encoding to be used in the CSV file if generated,
+  <li>The -e switch specifies the character encoding to be used in the CSV and/or TXT files if generated,
     by default cp-1252 (which should be fine for Windows
     users in almost all locales). The JSON file is always encoded in UTF-8 as this
     is part of the JSON specification.</li>
   <li>The -o switch specifies the path and root file name for the output files. By default
   the output files (.json, .csv, .txt) have the same path and name as the SAV file.</li>
 </ul>
+
+### sav2json Example
+
+```
+sav2json -dp survey
+```
+
+Converts the file survey.sav in the current working directory creating
+the file survey.json, including the data values and formatting the JSON for
+readability.
+
+## Running json2sss
+
+### The json2sss command line
+
+```
+<some-folder>\json2sss [switches] <SAV-file>.
+```
+
+where <SAV-file> is the path to and name of a JSON file created by sav2json.
+
+#### Switches taking no value
+
 <ul>
+  <li>The -c switch specifies that a CSV data file should be created in Triple-S
+  format. The name of the file will be <SAV-file>_sss.csv.
+  </li>
   <li>The -s switch disables "sensible string lengths". This is a default
     option useful for data sets coming from Quancept ® which may have extremely
     long string variable lengths. By default each long string variable is
-    reduced to a length no greater than the next power of 2 greater than the
+    reduced to a length no greater than the next power of 2 at least equal to the
     maximum size found in the file for that variable.
-  <li>The -x switch can be used to specify the value of the 'user' element in
-    the XML file. The value should not contain a semicolon (';') character.
-    Note that switches whose values contain spaces should be enclosed in double
-    quotes in the command line as shown above. The user element does not appear
-    by default. </li>
+    </li>
+    <li>The -v switch forces display of the version number of json2sss
+    </li>
+</ul>
+
+#### Switches taking a value
+
+<ul>
+  <li>The -e switch specifies the character encoding to be used in the CSV or ASCII text
+    files if generated. By default cp-1252 (which should be fine for Windows
+    users in almost all locales).</li>
   <li>The -h switch is used to specify an href attribute for the &lt;record&gt;
     element. By default sav2sss includes an href which is a relative reference
     to the .asc file. To exclude the href altogether use
     <pre>"-h "</pre>
+  </li>
+  <li>The -i switch is used to specify the ident attribute of the <record> element
+  of the XML file. By default this is 'A', i.e. the default is <pre>-iA</pre>.
   </li>
   <li>The -t switch is used to specify contents of either of the &lt;name&gt;
     and &lt;title&gt; elements in the XML. Separate the name and title by a
@@ -90,25 +117,16 @@ value in double quotes, e.g. "-tMy title"</em>
     <pre>"-tJanuary 2014 Omnibus survey"</pre>
     <p>No name, and title is 'January 2014 Omnibus survey' </p>
   </li>
-  <li>The -d switch is used to trigger interpreted CSV mode (see below) and
-    specify a delimiter for multiple values in the output file.</li>
-  <li>The -e switch is used for identifying multiple variables recorded in the .sav file as consecutive single variables. These are typically identified with a common prefix, a delimiter such as underscore, and then a suffix reflecting the identity of each category. This suffix is usually an integer corresponding to the position of the category in the answer list, i.e. _1 for the first answer, _2 for the second answer and so on. For this case, specify "-e_" to assemble (for example) a multiple Q1 from SPSS variables Q1_1, Q1_2 etcetera. Sometimes the suffices are not of this form, typically if the suffices are alphabetic or integers not consecutive and starting from one. To specify suffices individually, add them after the delimiter character separated by colons, e.g. "-e@A:B:C:D:E:F:G:H" to specify that the delimiter is at-sign and the suffices are A, B, C, D, E, F, G and H.<p>The default is "-e" i.e. sav2sss will not attempt to infer and create multiple variables from the SPSS data.
-  </p>
+  <li>The -x switch can be used to specify the value of the 'user' element in
+    the XML file. The value should not contain a semicolon (';') character.
+    Note that switches whose values contain spaces should be enclosed in double
+    quotes in the command line as shown above. The user element does not appear
+    by default.
   </li>
-
-## Example
-
-```
-sav2json -dp survey
-```
-
-Converts the file survey.sav in the current working directory creating
-the file survey.json, including the data values and formatting the JSON for
-readability.
-
 </ul>
 
-<h2>Metadata</h2>
+
+<h2>Triple-s Metadata</h2>
 
 <p>The contents of the &lt;user&gt; element may be controlled by the -x
 parameter as described above. Otherwise:</p>
@@ -274,9 +292,6 @@ features of sav2sss that create Triple-S multiple variables.</p>
 
 savutil was developed with Python 2.7.
 
-<h4>Prequisites</h4>
-
-sav2json uses the file savdllwrapper.py which was developed by  
 <h4>Testing</h4>
 
 <p>To run sav2sss in the Python interpreter
