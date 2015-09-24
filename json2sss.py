@@ -4,27 +4,9 @@ import exceptions
 import math
 import re
 import traceback
-
 from xml.sax.saxutils import escape, quoteattr
 
 import unicodecsv
-		
-def pruneCSVNumber (lText):
-	text = lText.lstrip ()
-	if text.startswith ('-'):
-		sign = '-'
-		rump = text [1:]
-	else:
-		sign = ''
-		rump = text
-	rump = rump.lstrip ('0')
-	if rump.startswith ('.'):
-		rump = '0' + rump
-	if rump == "0.":
-		value = "0"
-	value = sign + rump
-	# print "..Pruning %s as %s" % (text, value)
-	return value
 	
 def numericPreferenceSortOrder (x):
 	try:
@@ -65,9 +47,6 @@ def next10Power (x):
 		limit *= 10
 		result += 1
 	return (result, limit)
-	
-# Find number of columns and encoded rounded minimum and maximum for a number with
-# given range and number of decimal places
 
 def subDigits (t, x):
 	result = ""
@@ -77,6 +56,9 @@ def subDigits (t, x):
 		else:
 			result += char
 	return result
+	
+# Find number of columns and encoded rounded minimum and maximum for a number with
+# given range and number of decimal places
 		
 def fieldFor (minimum, maximum, dp=0, width=None):
 	if width is None: width = 0
@@ -252,15 +234,16 @@ if __name__ == "__main__":
 	import json
 	import os.path
 	import sys
+
+	from version import savutilVersion
 		
 	sensibleStringLengths = True
 	full = False
 	outputEncoding = "Windows-1252"
 	ident = "A"
 	spreadMultipleAnswerList = ":1st answer,:2nd answer,:3rd answer,:4th answer,:5th answer,:6th answer,:7th answer,:8th answer"
-	version = 0.9
 	defaultMetadata = (";%s;%s;JSON2SSS %s (Windows) by Computable Functions (http://www.computable-functions.com)" %\
-		("now", "now", version)).split (";")
+		("now", "now", savutilVersion)).split (";")
 	xmlMetadata = ""
 	showVersion = False
 	href = ""
@@ -322,7 +305,7 @@ if __name__ == "__main__":
 		sys.exit (0)
 				
 	if showVersion:
-		print "..sav2sss version %s" % version
+		print "..sav2sss version %s" % savutilVersion
 				
 	if csv:
 		format = 'csv'

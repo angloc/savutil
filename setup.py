@@ -27,6 +27,8 @@ from distutils.core import setup
 import py2exe
 import os.path
 
+from version import savutilVersion
+
 includes = ['encodings', 'encodings.*']
 
 options = {
@@ -47,7 +49,7 @@ setup(
       description="savjson - convert .sav data into a JSON format",
       name="sav2json",
       zipfile=None,
-      version="0.1")
+      version=savutilVersion)
 
 setup(
       console=["json2sss.py"],
@@ -55,8 +57,8 @@ setup(
       author_email="iain@computable-functions.com",
       contact="Iain MacKay",
       options=options,
-      contact_email="support@computable-functions.com",
+      contact_email="iain@computable-functions.com",
       description="json2sss - export json survey data to Triple-S",
       name="json2sss",
       zipfile=None,
-      version="0.1")
+      version=savutilVersion)

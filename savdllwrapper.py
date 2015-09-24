@@ -296,12 +296,25 @@ class Generic(object):
     def loadLibrary(self):
         """This function loads and returns the SPSSIO libraries,
         depending on the platform."""
-        path = os.path.abspath("C:\Users\Iain\Applications\SPSS\win32")
+	# First determine the path for the executable itself
+        # determine if application is a script file or frozen exe
+        if getattr(sys, 'frozen', False):
+            application_path = os.path.dirname(sys.executable)
+        elif __file__:
+            application_path = os.path.dirname(__file__)
         is_32bit = platform.architecture()[0] == "32bit"
         pf = sys.platform.lower()
         load = WinDLL if pf.startswith("win") else CDLL
         if pf.startswith("win"):
-            os.environ["PATH"] += ";" + path
+            # Maybe the DLLs are in an 'spss' subfolder (or in an SPSS
+            # installation somewhere on the PATH)
+            dll_path = os.path.abspath (os.path.join (
+                application_path,
+                "spss",
+                "win32" if is_32bit else "win64"))
+            # make sure dll folder is in the PATH
+            if os.environ ["PATH"].find (dll_path) == -1:
+            	os.environ["PATH"] += ";" + dll_path
             spssio = load("spssio32") if is_32bit else load("spssio64")
         elif pf.startswith("lin"):  # most linux flavours, incl zLinux
             spssio = load("libspssdio.so.1")

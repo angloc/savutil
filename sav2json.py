@@ -21,6 +21,8 @@ import unicodecsv
 
 import classifiedunicodevalue
 from classifiedunicodevalue import ClassifiedUnicodeValue
+	
+from version import savutilName, savutilVersion
 
 formatRE = re.compile ("([A-Z]+)(\d+)(\.(\d+))?")
 
@@ -223,7 +225,8 @@ class SAVDataset:
 
 	def toObject (self, includeValues=False):
 		result = {
-			"origin": "%s from %s" % (savJSONVersion, self.SPSSVersion),
+			"origin": "sav2json %s from %s" % 
+				(savutilVersion, self.SPSSVersion),
 			"application_format_namespace": "http://triple-s.org/savJSON"
 		}
 		if self.caseWeightVar:
@@ -274,8 +277,6 @@ class SAVDataset:
 			
 if __name__ == "__main__":
 
-	savJSONVersion = "savJSON 0.1"
-
 	import getopt
 	import json
 	import os.path
@@ -315,7 +316,7 @@ if __name__ == "__main__":
 		if option == "-v":
 			printVersion = True
 	if printVersion:
-		print "..%s" % savJSONVersion
+		print "..sav2json version %s" % savutilVersion
 	if len (args) > 0:	
 		(root, savExt) = os.path.splitext (args [0])
 		if not savExt: savExt = ".sav"
