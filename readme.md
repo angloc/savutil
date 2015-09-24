@@ -30,6 +30,7 @@ subfolders are win32 and win64. The distributed executables use win32.
 
 <del>For your convenience the toolkit is also provided as a download here, which the author believes to be in conformity with IBM's license therein (line 729 of the English text). If you use this download read and comply with the terms of the IBM license.</del>
 
+
 The toolkit is available f.o.c. from IBM [here]
 - an SPSS licence is not required.
 
@@ -207,7 +208,7 @@ included in the XML file (these codes never appear in the exported data).</p>
 
 <h2>Anomalous code values</h2>
 
-<p>SPSS allows categorical variables to be incompletely coded, and to have
+SPSS allows categorical variables to be incompletely coded, and to have
 negative code values.
 
 This is not compatible with the requirements for
@@ -226,8 +227,6 @@ the individual value elements.
 Variables that do meet either of these criteria are converted as Triple-S
 quantity variables with a range based on the width declared for them in
 SPSS.
-
-</p>
 
 <h2>CSV output</h2>
 
@@ -281,7 +280,7 @@ In no event shall the author be liable to you or any third parties for any speci
 punitive, incidental, indirect or consequential damages of any kind,
 or any damages whatsoever, including, without limitation,
 those resulting from loss of use, data or profits,
-whether or not the BGS has been advised of the possibility of such damages,
+whether or not the author has been advised of the possibility of such damages,
 and on any theory of liability,
 arising out of or in connection with the use of this software.
 
