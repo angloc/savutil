@@ -9,7 +9,6 @@ c:\python27\python setup.py py2exe --dist-dir=temp --packages encodings
 rmdir .\build /s/q
 rmdir .\output /s/q
 mkdir .\output
-copy readme.html .\output\*
 if exist spss xcopy /s /i .\spss .\output\spss
 move /y .\temp\sav2json.exe .\output\sav2json.exe
 move /y .\temp\json2sss.exe .\output\json2sss.exe

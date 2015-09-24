@@ -147,6 +147,7 @@ class SAVDataset:
 		self.textInfo = reader.textInfo	# Documentation text
 		(self.numVars, self.nCases, self.varNames, self.varTypes,
 		 self.formats, self.varLabels, self.valueLabels) = reader.getSavFileInfo()
+		self.valueLabelLists = reader.valueLabelLists
 		self.nameIndex = {}
 		for index, name in enumerate (self.varNames):
 			self.nameIndex [name] = index
@@ -187,10 +188,10 @@ class SAVDataset:
 		for index, variable in enumerate (self.variables):
 			distribution = {}
 			name = self.varNames [index]
-			valueLabels = self.valueLabels.get (name)
-			if valueLabels:
+			valueLabelList = self.valueLabelLists.get (name)
+			if valueLabelList:
 				normalisedValueLabels = {}
-				for value, label in valueLabels.items ():
+				for value, label in valueLabelList:
 					normalisedValue = formatDP (ClassifiedUnicodeValue (omitMissing (value,
 						self.missingValuesList [index])).value, self.dpList [index])
 					#normalisedLabel = ClassifiedUnicodeValue (label).value
@@ -205,7 +206,7 @@ class SAVDataset:
 					distribution [value] += 1
 				else:
 					distribution [value] = 1
-					if valueLabels and value is not None\
+					if valueLabelList and value is not None\
 						and not normalisedValueLabels.has_key (value):
 						variable.incompleteCoding = True
 			variable.cd = classifiedunicodevalue.ClassifiedDistribution (distribution)
@@ -233,24 +234,29 @@ class SAVDataset:
 			result ["weight_variable"] = self.caseWeightVar
 		if self.title:
 			result ["title"] = self.title
-		listHashMap = {}
+		tableHashMap = {}
 		uniqueLists = {}
 		uniqueListMap = {}
 		for name, vTable in self.valueLabels.items ():
 			missingTreatment = self.missingValues [name]
-			newList = {}
+			newTable = {}
+			newList = []
 			for code, label in vTable.items ():
 				missing = missingTreatment and (omitMissing (code, missingTreatment) is None)
 				if not missing:
 					# We receive integer codes as reals encoded as texts
 					normalisedCode = classifiedunicodevalue.ClassifiedUnicodeValue (code).value
-					newList [normalisedCode] = label.strip ()
-			if len (newList) == 0: continue
-			newListHash = json.dumps (newList)
-			existingListName = listHashMap.get (newListHash)
+					newTable [normalisedCode] = label.strip ()
+					newList.append (unicode (normalisedCode))
+			if len (newTable) == 0: continue
+			newTableHash = json.dumps (newTable)
+			existingListName = tableHashMap.get (newTableHash)
 			if not existingListName:
-				listHashMap [newListHash] = name
-				uniqueLists [name] = newList
+				tableHashMap [newTableHash] = name
+				uniqueLists [name] = {
+					"table": newTable,
+					"sequence": newList
+				}
 				existingListName = name
 			uniqueListMap [name] = existingListName
 				

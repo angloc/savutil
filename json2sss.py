@@ -7,12 +7,6 @@ import traceback
 from xml.sax.saxutils import escape, quoteattr
 
 import unicodecsv
-	
-def numericPreferenceSortOrder (x):
-	try:
-		return float (x)
-	except:
-		return x
 
 # The integer at least equal in magnitude to x
 def magCeil (x):
@@ -92,7 +86,6 @@ def SSSAllocate (jsonData):
 	import math
 	recordLength = 0
 	index = 0
-	jsonData ["sorted_lists"] = {}
 	for index, variableName in enumerate (jsonData ["variable_sequence"]):
 		variable = jsonData ["variables"] [variableName]
 		cd = variable ["distribution"]
@@ -130,34 +123,23 @@ def SSSAllocate (jsonData):
 			variable ["SSSWidth"] = 1
 		labelListName = variable.get ("code_list_name")
 		if labelListName:
-			labelList = jsonData ["code_lists"] [labelListName]
-			sortedList = jsonData ["sorted_lists"].get (labelListName)
-			if not sortedList:
-				sortedList = sorted (labelList.keys (),
-					lambda x, y: cmp (numericPreferenceSortOrder (x),
-						          numericPreferenceSortOrder (y)))
-				jsonData ["sorted_lists"] [labelListName] = sortedList
-			maxCodeLength = max ((len (code) for code in labelList.keys ()))
-			variable ["SSSType"] = "single"
-			variable ["SSSWidth"] = max (maxCodeLength, cd.get ("max_text_length"))
-			if jDataType == "string":
+			variable ["SSSFormat"] = "numeric"
+			if jDataType != "integer" or\
+			   variable ["distribution"].get ("min_value") < 0:
 				variable ["SSSFormat"] = "literal"
+			if variable.get ("incomplete_coding") and\
+			   variable ["SSSFormat"] == "literal":
+				print "--Variable %s has incomplete coding" % variable ["name"]
+				# Variable exported as quantity or string
 			else:
-				variable ["SSSFormat"] = "numeric"
-				variable ["SSSNumericFormat"] = formatFor (variable ["SSSWidth"])
+				labelList = jsonData ["code_lists"] [labelListName]
+				maxCodeLength = max ((len (code) for code in labelList ["table"].keys ()))
+				variable ["SSSType"] = "single"
+				variable ["SSSWidth"] = max (maxCodeLength, cd.get ("max_text_length"))
+				if variable ["SSSFormat"] == "numeric":
+					variable ["SSSNumericFormat"] = formatFor (variable ["SSSWidth"])
 		variable ["start"] = recordLength + 1
 		variable ["finish"] = recordLength + variable ["SSSWidth"]
-		#elif variable ["SSSType"] == "multiple":
-		#	if variable.isSpread:
-		#		variable.width = codeLength (variable.answerList.maxCode)
-		#		spreadSize = variable.count * variable.width
-		#		variable.finish = recordLength + spreadSize
-		#	else:
-		#		variable.width = 1
-		#		variable.finish = recordLength + variable.length
-		#elif variable ["SSSType"] == "single":
-		#	variable ["width"] = codeLength (variable.answerList.maxCode)
-		#	variable.finish = recordLength + variable.width
 		recordLength = variable ["finish"]
 	return recordLength
 	
@@ -210,9 +192,8 @@ def writeXMLForVariables (jsonData, XMLFile, format="asc"):
 					 variable ["SSSEncodedMaximum"]))
 			if variable ["SSSType"] == "single":
 				codeList = jsonData ["code_lists"] [variable ["code_list_name"]]
-				sortedList = jsonData ["sorted_lists"] [variable ["code_list_name"]]
-				for code in sortedList:
-					text = codeList [code]
+				for code in codeList ["sequence"]:
+					text = codeList ["table"] [code]
 					if text is None:
 						text = ""
 					elif type (text) == int:
@@ -224,9 +205,6 @@ def writeXMLForVariables (jsonData, XMLFile, format="asc"):
 						(forceEncoding (code), text))
 			XMLFile.write ("""				</values>\n""")
 		XMLFile.write ("""			</variable>\n""")
-		if variable.get ("incomplete_coding") and\
-			variable ["SSSFormat"] == 'literal':
-			print "--Variable %s has incomplete coding" % variable ["name"]
 
 if __name__ == "__main__":
 	import datetime

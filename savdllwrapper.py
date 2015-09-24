@@ -890,8 +890,8 @@ class Header(Generic):
     def valueLabels(self):
         """Get/Set VALUE LABELS.
         Takes a dictionary of the form {varName: {value: valueLabel}:
-        --{'numGender': {1: 'female', {2: 'male'}}
-        --{'strGender': {'f': 'female', 'm': 'male'}}"""
+        --{'numGender': {1: 'female'}, {2: 'male'}}
+        --{'strGender': {'f': 'female'}, 'm': 'male'}}"""
         def initArrays(isNumeric=True, size=1000):
             """default size assumes never more than 1000 labels"""
             labelsArr = (POINTER(c_char_p * size))()
@@ -965,6 +965,67 @@ class Header(Generic):
                 if retcode > 0:
                     msg = "Problem with setting value labels of variable %r"
                     raise SPSSIOError(msg % varName, retcode)
+
+    @property
+    @decode
+    def valueLabelLists(self):
+        """Get VALUE LABELS in SPSS declared order.
+        Takes a dictionary of the form {varName: {value: valueLabel}:
+        --{'numGender': {1: 'female'}, {2: 'male'}}
+        --{'strGender': {'f': 'female'}, 'm': 'male'}}"""
+        def initArrays(isNumeric=True, size=1000):
+            """default size assumes never more than 1000 labels"""
+            labelsArr = (POINTER(c_char_p * size))()
+            if isNumeric:
+                return (POINTER(c_double * size))(), labelsArr
+            return (POINTER(c_char_p * size))(), labelsArr
+
+        valueLabelLists = {}
+        for varName in self.varNames:
+            vName = self.vNames[varName]
+            numLabels = c_int()
+
+            # step 1: get array size (numeric values)
+            if self.varTypes[varName] == 0:
+                valuesArr, labelsArr = initArrays(True)
+                func = self.spssio.spssGetVarNValueLabels
+                retcode = func(c_int(self.fh), c_char_p(vName),
+                               byref(valuesArr), byref(labelsArr),
+                               byref(numLabels))
+                valuesArr, labelsArr = initArrays(True, numLabels.value)
+
+            # step 1: get array size (string values)
+            else:
+                valuesArr, labelsArr = initArrays(False)
+                func = self.spssio.spssGetVarCValueLabels
+                retcode = func(c_int(self.fh), c_char_p(vName),
+                               byref(valuesArr), byref(labelsArr),
+                               byref(numLabels))
+                valuesArr, labelsArr = initArrays(False, numLabels.value)
+
+            # step 2: get labels with array of proper size
+            retcode = func(c_int(self.fh), c_char_p(vName), byref(valuesArr),
+                           byref(labelsArr), byref(numLabels))
+            if retcode > 0:
+                msg = "Error getting value labels of variable %r"
+                raise SPSSIOError(msg % varName, retcode)
+
+            # get array contents
+            if not numLabels.value:
+                continue
+            values = [valuesArr[0][i] for i in xrange(numLabels.value)]
+            labels = [labelsArr[0][i] for i in xrange(numLabels.value)]
+            valueLabelsX = [(val, lbl) for val, lbl in zip(values, labels)]
+            valueLabelLists[varName] = valueLabelsX
+
+            # clean up
+            args = (valuesArr, labelsArr, numLabels)
+            if self.varTypes[varName] == 0:
+                self.freeMemory("spssFreeVarNValueLabels", *args)
+            else:
+                self.freeMemory("spssFreeVarCValueLabels", *args)
+
+        return valueLabelLists
 
     @property
     @decode

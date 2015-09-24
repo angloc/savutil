@@ -28,9 +28,10 @@ containing the extract of the IO_Module_for_SPSS_Statistics_xx.zip download from
 (xx varying from time to time, e.g. 23. 23 or later should be fine). The crucial
 subfolders are win32 and win64. The distributed executables use win32.
 
-For your convenience the toolkit is also provided as a download here, which the author believes to be in conformity with IBM's license therein (line 729 of the English text).
+<del>For your convenience the toolkit is also provided as a download here, which the author believes to be in conformity with IBM's license therein (line 729 of the English text). If you use this download read and comply with the terms of the IBM license.</del>
 
-The toolkit is also available f.o.c. from IBM [here] though registration is required - an SPSS licence is not required.
+The toolkit is available f.o.c. from IBM [here]
+- an SPSS licence is not required.
 
 [here]:https://www-01.ibm.com/marketing/iwm/iwm/web/reg/download.do?source=swg-tspssp&lang=en_US&S_PKG=do&cp=UTF-8&dlmethod=http
 
@@ -112,7 +113,7 @@ The frequency distributions are stored in the JSON file, along with metadata suc
 
 sav2json can also include the case data as well as metadata in the JSON file, creating a single file with the same information as the SAV file but in a much more accessible form, i.e. no library is required to use it.
 
-The data are stored in the JSON file in a transposed form, i.e. there is one array for each variable containing the values for each case. To reduce space and time requirements repeated values in consecutive cases are compressed.
+The case data are stored in the JSON file in a transposed form, i.e. there is one array for each variable containing the values for each case. To reduce space and time requirements repeated values in consecutive cases are compressed.
 
 The JSON file format is not further documented at this time.
 
@@ -188,12 +189,17 @@ parameter as described above. Otherwise:</p>
 
 <h2>Triple-S considerations</h2>
 
+json2sss exports a Triple-S XML version 2.0 file, though in most cases it will be
+conformant to the version 1.2 specification. Version 2.0 allows greater freedom to
+export zero and literal string valued codes, which do occur quite frequently in SAV files.
+
 <h2>Missing values</h2>
 
 <p>A .sav file may declare certain values for a variable to be missing values.
 Triple-S represents missing values with a blank field, so sav2sss outputs all
-missing values as blanks. The codes for missing values are not
-included in the XML file (these codes never appear in the data).</p>
+missing values as blanks (`null` values in JSON).
+The codes for missing values are not
+included in the XML file (these codes never appear in the exported data).</p>
 
 <h2>Numeric ranges</h2>
 
@@ -201,21 +207,23 @@ included in the XML file (these codes never appear in the data).</p>
 
 <h2>Anomalous code values</h2>
 
-<p>SPSS allows all variables including numerics to have codes for missing
-values. It also allows categorical variables to be incompletely coded, and have
+<p>SPSS allows categorical variables to be incompletely coded, and to have
 negative code values.
 
 This is not compatible with the requirements for
 categorical variables in Triple-S.
 
-Therefore variables are only treated as
-categorical, i.e. single, if all the values appearing in the file
-have been coded, and only valid codes (zero or higher integer) are used, except
-for missing values which may have any code because they are not written to the
-output file. A variable must have at least two categories after excluding
-missing values and invalid codes in order to be treated as categorical.
+Therefore variables with a value list are only exported as
+categorical, i.e. single, if either:
 
-Variables rejected on the basis of these criteria are converted as Triple-S
+* all values in the value list are non-negative integers. Such variables are exported
+as singles in `numeric` format. If there are (non-negative) values in the data that
+do not appear in the value list, json2sss will provide a `range` element as well as
+the individual value elements.
+
+* there are values in the value list not compatible with `numeric` format but all the values in the data can be found in the value list. Such variables are exported in `literal` format.
+
+Variables that do meet either of these criteria are converted as Triple-S
 quantity variables with a range based on the width declared for them in
 SPSS.
 
@@ -237,13 +245,14 @@ run the scripts sav2json.py and json2sss.py</p>
 
 <h4>Building</h4>
 <ol>
-  <li>Download the sources.</li>
+  <li>Download the sources into a convenient folder.</li>
   <li>Building the Windows executable requires the <a
     href="http://www.py2exe.org/">py2exe library</a>. </li>
   <li><strong>Review the script setup.bat for its suitability on your
     system</strong>.</li>
-  <li>Execute setup.bat to create sav2json.exe, json2sss.exe and readme.html in a subfolder
-    .\output</li>
+  <li>If incorporating the SPSS DLLs, extract the toolkit into a subfolder `spss`.
+  <li>Execute setup.bat to create `sav2json.exe` and `json2sss.exe` in a subfolder
+    `.\output`. The SPSS files if found will be copied to the subfolder `output\spss`.</li>
 </ol>
 
 # Disclaimer
