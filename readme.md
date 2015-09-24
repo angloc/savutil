@@ -28,11 +28,12 @@ containing the extract of the IO_Module_for_SPSS_Statistics_xx.zip download from
 (xx varying from time to time, e.g. 23. 23 or later should be fine). The crucial
 subfolders are win32 and win64. The distributed executables use win32.
 
-<del>For your convenience the toolkit is also provided as a download here, which the author believes to be in conformity with IBM's license therein (line 729 of the English text). If you use this download read and comply with the terms of the IBM license.</del>
+The toolkit is available f.o.c. from IBM [here] - an SPSS licence is not required.
 
-
-The toolkit is available f.o.c. from IBM [here]
-- an SPSS licence is not required.
+<del>For your convenience the toolkit is also provided as a download on these pages,
+which the author believes to be in conformity with IBM's license therein
+(line 729 of the English text).
+If you use this download read and comply with the terms of the IBM license.</del>
 
 [here]:https://www-01.ibm.com/marketing/iwm/iwm/web/reg/download.do?source=swg-tspssp&lang=en_US&S_PKG=do&cp=UTF-8&dlmethod=http
 
@@ -132,7 +133,8 @@ where <SAV-file> is the path to and name of a JSON file created by sav2json.
 
 <ul>
   <li>The -c switch specifies that a CSV data file should be created in Triple-S
-  format. The name of the file will be <SAV-file>_sss.csv.
+  format. The name of the file will be `<SAV-file>_sss.csv`.
+  By default json2sss creates a fixed-length record `<SAV-file>_sss.asc`.
   </li>
   <li>The -s switch disables "sensible string lengths". This is a default
     option useful for data sets coming from Quancept ® which may have extremely
@@ -175,8 +177,13 @@ where <SAV-file> is the path to and name of a JSON file created by sav2json.
   </li>
 </ul>
 
+<h2>Triple-S considerations</h2>
 
-<h2>Triple-s Metadata</h2>
+json2sss exports a Triple-S XML version 2.0 file, though in most cases it will be
+conformant to the version 1.2 specification. Version 2.0 allows greater freedom to
+export zero and literal string valued codes, which do occur quite frequently in SAV files.
+
+<h3>Metadata</h3>
 
 <p>The contents of the &lt;user&gt; element may be controlled by the -x
 parameter as described above. Otherwise:</p>
@@ -188,13 +195,7 @@ parameter as described above. Otherwise:</p>
   </li>
 </ul>
 
-<h2>Triple-S considerations</h2>
-
-json2sss exports a Triple-S XML version 2.0 file, though in most cases it will be
-conformant to the version 1.2 specification. Version 2.0 allows greater freedom to
-export zero and literal string valued codes, which do occur quite frequently in SAV files.
-
-<h2>Missing values</h2>
+<h3>Missing values</h3>
 
 <p>A .sav file may declare certain values for a variable to be missing values.
 Triple-S represents missing values with a blank field, so sav2sss outputs all
@@ -202,13 +203,13 @@ missing values as blanks (`null` values in JSON).
 The codes for missing values are not
 included in the XML file (these codes never appear in the exported data).</p>
 
-<h2>Numeric ranges</h2>
+<h3>Numeric ranges</h3>
 
 <p>The SAV file does not provide information about valid value ranges. json2sss uses the information in the frequency distribution for each variable to infer a sensible range and precision.</p>
 
-<h2>Anomalous code values</h2>
+<h3>Anomalous code values</h3>
 
-SPSS allows categorical variables to be incompletely coded, and to have
+SPSS allows variables with labelled values to be incompletely coded, and to have
 negative code values.
 
 This is not compatible with the requirements for
@@ -225,13 +226,24 @@ the individual value elements.
 * there are values in the value list not compatible with `numeric` format but all the values in the data can be found in the value list. Such variables are exported in `literal` format.
 
 Variables that do meet either of these criteria are converted as Triple-S
-quantity variables with a range based on the width declared for them in
-SPSS.
+quantity variables.
 
-<h2>CSV output</h2>
+<h3>CSV output</h3>
 
-<p>If the -c switch is used a .CSV file is generated as specified in the
-Triple-S standard.</p>
+If the -c switch is used a .CSV file is generated as specified in the
+Triple-S standard.
+
+<h2>Known issues</h2>
+
+<h3>Truncated Unicode characters</h3>
+
+It seems that in some circumstances an SPSS character data field of fixed length will
+be truncated in the middle of a multi-byte Unicode character.
+
+It is not known whether this is a problem in the SPSSIO DDL,
+in some programs creating SAV files or elsewhere.
+
+When detected json2sss removes such characters silently.
 
 <h2>Using the source (for Python developers)</h2>
 
@@ -254,7 +266,18 @@ run the scripts sav2json.py and json2sss.py</p>
     `.\output`. The SPSS files if found will be copied to the subfolder `output\spss`.</li>
 </ol>
 
-# Disclaimer
+## Credits
+
+The software is based on the [Python wrapper] for the SPSSIO DLL created and
+maintained by Albert-Jan Roskam. A slightly modified version is used here as the
+file `savdllwrapper.py`.
+[Python wrapper]:http://code.activestate.com/recipes/577811-python-reader-writer-for-spss-sav-files/?in=user-4177640
+
+There is a [newer version of the wrapper] that bundles the DLLs available and
+savutil may be adapted in due course to use it.
+[newer version of the wrapper]:https://pypi.python.org/pypi/savReaderWriter/
+
+## Disclaimer
 
 The savutil software is provided 'as is' without warranty of any kind,
 either express or implied, including, but not limited to, the implied warranties
