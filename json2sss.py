@@ -6,6 +6,7 @@ import re
 import traceback
 from xml.sax.saxutils import escape, quoteattr
 
+import datautil
 import unicodecsv
 
 # The integer at least equal in magnitude to x
@@ -142,14 +143,6 @@ def SSSAllocate (jsonData):
 		variable ["finish"] = recordLength + variable ["SSSWidth"]
 		recordLength = variable ["finish"]
 	return recordLength
-	
-def valueIterator (values):
-	for valueItem in values:
-		if type (valueItem) == list:
-			for index in xrange (valueItem [0]):
-				yield valueItem [1]
-		else:
-			yield valueItem
 
 def writeXMLForVariables (jsonData, XMLFile, format="asc"):
 	variables = jsonData ["variables"]
@@ -175,7 +168,7 @@ def writeXMLForVariables (jsonData, XMLFile, format="asc"):
 				(index+1, quoteattr(variable ["SSSType"]),
 				 formatAttribute, use, filter,
 				 escapeOrNone (variable ["name"]),
-				 escapeOrNone (variable ["title"]),
+				 escapeOrNone (variable.get ("title")),
 				 positionAttributes)
 		XMLFile.write (forceEncoding (result))
 		if variable ["SSSType"] in ('character', 'date', 'time'):
@@ -326,14 +319,6 @@ if __name__ == "__main__":
 			sssDate = nowISO [:10]
 		if sssTime and sssTime.lower () == 'now':
 			sssTime = nowISO [11:19]
-		#newSchema.sssDate = sssDate
-		#newSchema.sssTime = sssTime
-		#newSchema.sssOrigin = sssOrigin
-		#newSchema.sssUser = sssUser
-		#newSchema.ident = ident
-		#newSchema.schema.name = name
-		#newSchema.schema.title = title
-		#newSchema.allocate()
 		SSSAllocate (jsonData)
 		
 		outputXMLFile = open (root + "_sss.xml", 'w')
@@ -385,18 +370,8 @@ if __name__ == "__main__":
 		if format == "csv":
 			CSVFile = unicodecsv.writer (datafile, encoding=outputEncoding)
 			CSVFile.writerow (jsonData ["variable_sequence"])
-		variableIterators = [valueIterator (jsonData ["data"] [variableName])
-			for variableName in jsonData ["variable_sequence"]]
-		variableTypes = [jsonData ["variables"] [variableName] ["SSSType"]
-			for variableName in jsonData ["variable_sequence"]]
-		variableWidths = [jsonData ["variables"] [variableName] ["SSSWidth"]
-			for variableName in jsonData ["variable_sequence"]]
-		numLits = [jsonData ["variables"] [variableName].get ("SSSFormat")
-			for variableName in jsonData ["variable_sequence"]]
-		numericFormats = [jsonData ["variables"] [variableName].get ("SSSFormat")
-			for variableName in jsonData ["variable_sequence"]]
 		fieldData = [(
-			valueIterator (jsonData ["data"] [variableName]),
+			datautil.valueIterator (jsonData ["data"] [variableName]),
 			jsonData ["variables"] [variableName] ["SSSType"],
 			jsonData ["variables"] [variableName] ["SSSWidth"],
 			jsonData ["variables"] [variableName] .get ("SSSFormat"),
@@ -413,7 +388,7 @@ if __name__ == "__main__":
 					if variableType == "quantity" or\
 					   (variableType == "single" and numLit == "numeric"):
 						value = numericFormat % value
-					if variableType == "date":
+					elif variableType == "date":
 						value = value [:4] + value [5:7] + value [8:]
 					elif variableType == "time":
 						value = value [:2] + value [3:5] + value [6:]
@@ -423,6 +398,8 @@ if __name__ == "__main__":
 						value = unicode (value).ljust (width)
 					else:
 						value = unicode (value).rjust (width)
+				else:
+					value = unicode (value).strip ()
 				record.append (value)
 			if format == "csv":
 				CSVFile.writerow (record)

@@ -171,7 +171,7 @@ class ClassifiedDistribution (object):
 			   self.minTextLength == self.maxTextLength:
 			   self.frequencyType = 'id'
 		else:
-			self.frequencyType = 'distributed'
+			self.frequencyType = 'variable'
 			
 	def toObject (self, includeTotal=True):
 		result = {
@@ -192,7 +192,7 @@ class ClassifiedDistribution (object):
 			result ["max_text_length"] = self.maxTextLength
 			result ["max_digits"] = self.maxDigits
 			result ["max_dp"] = self.maxDP
-		if self.frequencyType == "distributed":
+		if self.frequencyType == "variable":
 			distribution = {}
 			for value, count in self.collapsedDistribution:
 				distribution [value.value] = count

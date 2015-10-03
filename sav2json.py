@@ -10,12 +10,12 @@
 #	Diversity of date-time formats
 #	Encoding issues - JSON is output by default as ASCII with individual non-ASCII codes escaped
 
-import itertools
 import exceptions
 import math
 import re
 import sys
 
+import datautil
 import savdllwrapper
 import unicodecsv
 
@@ -124,17 +124,6 @@ class SAVVariable:
 		if self.multRespDef:
 			result ["spss_multiple_response_definition"] = self.multRespDef
 		return result
-		
-def compressedValueSequence (s, jsonType=None):
-	length = sum (1 for _ in s [1])
-	value = s [0]
-	if value is not None:
-		if jsonType == "integer": value = int (value)
-		elif jsonType == "decimal": value = float (value)
-	if length == 1:
-		return value
-	else:
-		return (length, value)
 	
 class SAVDataset:
 	def __init__ (self, savFilename, sensibleStringLengths=True):
@@ -169,15 +158,6 @@ class SAVDataset:
 		else:
 			self.SPSSVersion = "Unknown SPSS version"
 		self.dpList = [variable.dp for variable in self.variables]
-		self.records = []
-		#for record in reader:
-		#	newRecord = []
-		#	for index, col in enumerate (record):
-		#		nonMissing = omitMissing (col, self.missingValuesList [index])
-		#		cuv = ClassifiedUnicodeValue (nonMissing).value
-		#		value = formatDP (cuv, self.dpList [index])
-		#		newRecord.append (value)
-		#	self.records.append (newRecord)
 			
 		self.records = [[formatDP (ClassifiedUnicodeValue
 					(omitMissing (col, self.missingValuesList [index])).value,
@@ -258,6 +238,7 @@ class SAVDataset:
 					"sequence": newList
 				}
 				existingListName = name
+				
 			uniqueListMap [name] = existingListName
 				
 		result ["code_lists"] = uniqueLists
@@ -273,12 +254,12 @@ class SAVDataset:
 				variableObject ["incomplete_coding"] =\
 					variable.incompleteCoding
 			result ["variables"] [variable.name] = variableObject
+			
 		if includeData:
 			result ["data"] = {}
 			for index, variable in enumerate (self.variables):
-				result ["data"] [variable.name] = [compressedValueSequence (s, variable.jsonType)
-					for s in itertools.groupby\
-						(self.variableValues (index), lambda x: x)]
+				result ["data"] [variable.name] = datautil.compressedValues\
+					(self.variableValues (index), variable.jsonType)
 		return result
 			
 if __name__ == "__main__":
