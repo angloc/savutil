@@ -9,6 +9,15 @@ from xml.sax.saxutils import escape, quoteattr
 import datautil
 import unicodecsv
 
+def isPowerOfTen (x):
+	if x == 0 or x != int(x): return False
+	x = abs (x)
+	compare = 1
+	power = 0
+	while compare < x:
+		compare = compare*10
+	return x == compare
+
 # The integer at least equal in magnitude to x
 def magCeil (x):
 	if x >= 0.0:
@@ -59,15 +68,17 @@ def fieldFor (minimum, maximum, dp=0, width=None):
 	if width is None: width = 0
 	encodedMin = "%*.*f" % (width, dp, minimum)
 	encodedMax = "%*.*f" % (width, dp, maximum)
-	encodedMinusMax = "%0.*f" % (dp, -maximum)
+	encodedMinusMax = "%*.*f" % (width, dp, -maximum)
 	if minimum < 0 and len (encodedMinusMax) > len (encodedMin):
 		encodedMin = encodedMinusMax
 	columns = max (len (encodedMin), len (encodedMax))
-	if minimum < 0:
-		encodedMin = subDigits (encodedMin, '9')
-	else:
-		encodedMin = '0'
-	encodedMax = subDigits (encodedMax, '9')
+	if not isPowerOfTen (minimum):
+		if minimum < 0:
+			encodedMin = subDigits (encodedMin, '9')
+		else:
+			encodedMin = subDigits (encodedMin, '0')
+	if not isPowerOfTen (maximum):
+		encodedMax = subDigits (encodedMax, '9')
 	return (columns, encodedMin, encodedMax)
 	
 def formatFor (columns, dp=0):

@@ -9,8 +9,11 @@ typeMnemonic = ["blank", "integer", "decimal", "text"]
 
 numberRE = re.compile ("([+\-]?[0-9]+)(\.[0-9]*)?$")
 
+# Type orders are None, Integer, Decimal, Text
+isNumericTypeOrder = [False, True, True, False]
+
 class ClassifiedUnicodeValue (object):
-	def __init__ (self, text, typeHint=None):
+	def __init__ (self, text):
 		self.text = text
 		if self.text is not None:
 			self.text = unicode (self.text).strip ()	# Original value
@@ -54,7 +57,11 @@ class ClassifiedUnicodeValue (object):
 				
 	def __cmp__ (self, other):
 		if self.typeOrder != other.typeOrder:
-			return cmp (self.typeOrder, other.typeOrder)
+			if isNumericTypeOrder [self.typeOrder] and\
+			   isNumericTypeOrder [other.typeOrder]:
+			   	return cmp (float (self.value), float (other.value))
+			else:
+				return cmp (self.typeOrder, other.typeOrder)
 		elif  self.typeOrder == 0:
 			return 0
 		else:
@@ -200,6 +207,17 @@ class ClassifiedDistribution (object):
 		if self.dataType == "text" and len (self.commonSuffix):
 			result ["common_suffix"] = self.commonSuffix
 		return result
+		
+class ClassifiedUnicodeValueCache (object):
+	def __init__ (self):
+		self.cache = {}
+	def get (self, value):
+		try:
+			return self.cache [value]
+		except:
+			result = ClassifiedUnicodeValue (value)
+			self.cache [value] = result
+			return result
 				
 if __name__ == "__main__":
 

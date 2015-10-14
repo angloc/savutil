@@ -245,6 +245,34 @@ in some programs creating SAV files or elsewhere.
 
 When detected json2sss removes such characters silently.
 
+## Release history
+
+### Version 0.1.2: September 2015 
+
+First version.
+
+### Version 0.1.3: October 14, 2015
+
+Maintenance release
+
+#### Enhancement
+
+<ul>
+	<li>Caching introduced to speed up sav2json.
+	</li>
+</ul>
+
+#### Bug fixes
+
+<ul>
+	<li>Minimum and maximum values correctly calculated in sav2json where
+	    field has mixture of integer and fractional values
+	</li>
+	<li>Number of decimal places consistent between minimum and maximum values
+	    in range output by json2sss
+	</li>
+</ul>
+
 <h2>Using the source (for Python developers)</h2>
 
 savutil was developed with Python 2.7.

@@ -1,4 +1,4 @@
 # Software name and number
 
 savutilName = "savutil"
-savutilVersion = "0.2.1"
+savutilVersion = "0.1.3"

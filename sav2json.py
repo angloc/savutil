@@ -45,6 +45,7 @@ def blankNone (t):
 	if t is not None: return unicode (t)
 	return ""
 	
+
 def formatDP (v, dp):
 	if v is None:
 		return None
@@ -128,6 +129,7 @@ class SAVVariable:
 class SAVDataset:
 	def __init__ (self, savFilename, sensibleStringLengths=True):
 		self.savFilename = savFilename
+		self.cache = classifiedunicodevalue.ClassifiedUnicodeValueCache ()
 		self.sensibleStringLengths = sensibleStringLengths
 		with savdllwrapper.SavHeaderReader(savFilename, ioUtf8=True) as spssDict:
 			dictionary = spssDict.dataDictionary()
@@ -159,7 +161,12 @@ class SAVDataset:
 			self.SPSSVersion = "Unknown SPSS version"
 		self.dpList = [variable.dp for variable in self.variables]
 			
-		self.records = [[formatDP (ClassifiedUnicodeValue
+		#self.records = [[formatDP (ClassifiedUnicodeValue
+		#			(omitMissing (col, self.missingValuesList [index])).value,
+		#			   self.dpList [index])
+		#		 for index, col in enumerate (record)]
+		#	for record in reader]
+		self.records = [[formatDP (self.cache.get
 					(omitMissing (col, self.missingValuesList [index])).value,
 					   self.dpList [index])
 				 for index, col in enumerate (record)]
@@ -172,7 +179,9 @@ class SAVDataset:
 			if valueLabelList:
 				normalisedValueLabels = {}
 				for value, label in valueLabelList:
-					normalisedValue = formatDP (ClassifiedUnicodeValue (omitMissing (value,
+					#normalisedValue = formatDP (ClassifiedUnicodeValue (omitMissing (value,
+					#	self.missingValuesList [index])).value, self.dpList [index])
+					normalisedValue = formatDP (self.cache.get (omitMissing (value,
 						self.missingValuesList [index])).value, self.dpList [index])
 					#normalisedLabel = ClassifiedUnicodeValue (label).value
 					#if normalisedValue is not None and normalisedLabel != normalisedValue:
@@ -200,7 +209,8 @@ class SAVDataset:
 					variable.jsonType = "string"
 				else:
 					variable.jsonType = "null"
-			
+		del self.cache
+		
 	def variableValues (self, index):
 		return (record [index] for record in self.records)
 
