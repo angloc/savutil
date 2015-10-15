@@ -336,7 +336,7 @@ The savutil software and its documentation:
 * may be changed without notice
 * may be out of date, and the author makes no commitment to update these materials.
 
-The author assumes no responsibility for errors or ommissions in the savutil software or its documentation.
+The author assumes no responsibility for errors or omissions in the savutil software or its documentation.
 
 In no event shall the author be liable to you or any third parties for any special,
 punitive, incidental, indirect or consequential damages of any kind,
