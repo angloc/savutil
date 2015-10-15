@@ -326,7 +326,7 @@ Without limiting the foregoing, the author makes no warranty that:
 
 * the software will meet your requirements
 * the software will be uninterrupted, timely, secure or error-free
-the results that may be obtained from the use of the software will be effective, accurate or reliable
+* the results that may be obtained from the use of the software will be effective, accurate or reliable
 * the quality of the software will meet your expectations
 * any errors in the software will be corrected.
 
