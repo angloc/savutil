@@ -273,6 +273,17 @@ Maintenance release
 	</li>
 </ul>
 
+### Version 0.1.4: October 15, 2015
+
+Maintenance release
+
+#### Bug fix
+
+<ul>
+	<li>Error fixed in writing out descriptive text information
+	</li>
+</ul>
+
 <h2>Using the source (for Python developers)</h2>
 
 savutil was developed with Python 2.7.

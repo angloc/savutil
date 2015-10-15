@@ -161,16 +161,20 @@ class SAVDataset:
 			self.SPSSVersion = "Unknown SPSS version"
 		self.dpList = [variable.dp for variable in self.variables]
 			
-		#self.records = [[formatDP (ClassifiedUnicodeValue
-		#			(omitMissing (col, self.missingValuesList [index])).value,
-		#			   self.dpList [index])
-		#		 for index, col in enumerate (record)]
-		#	for record in reader]
-		self.records = [[formatDP (self.cache.get
-					(omitMissing (col, self.missingValuesList [index])).value,
-					   self.dpList [index])
-				 for index, col in enumerate (record)]
-			for record in reader]
+		self.records = [None]*self.nCases
+		for caseIndex, record in enumerate (reader):
+			self.records [caseIndex] = [None]*self.numVars
+			for index, col in enumerate (record):
+				self.records [caseIndex] [index] =\
+					formatDP (
+						self.cache.get (
+							omitMissing (
+								col,
+								self.missingValuesList [index]
+						 	)
+						).value,
+					   	self.dpList [index]
+					)
 		self.normalisedValueLabels = {}
 		for index, variable in enumerate (self.variables):
 			distribution = {}
@@ -379,12 +383,12 @@ if __name__ == "__main__":
 
 	if dataset.textInfo:
 		print "..SAV file has %d character(s) of text information" %\
-			len (savData.textInfo)
+			len (dataset.textInfo)
 	if dataset.textInfo and outputText:
 		try:
 			TextFilename = os.path.join (outputPath, root + ".txt")
-			f = open (JSONFilename, "w")
-			print >>f, savData.textInfo
+			f = open (TextFilename, "w")
+			print >>f, dataset.textInfo
 			print "..Text information written to %s" % f.name
 			f.close ()
 		except exceptions.Exception, e:

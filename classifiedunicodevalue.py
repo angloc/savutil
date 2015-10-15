@@ -216,7 +216,10 @@ class ClassifiedUnicodeValueCache (object):
 			return self.cache [value]
 		except:
 			result = ClassifiedUnicodeValue (value)
-			self.cache [value] = result
+			# Don't bother caching decimal or long values, they are
+			# most likely unique
+			if result.typeOrder != 2 and len (result.text) < 5:
+				self.cache [value] = result
 			return result
 				
 if __name__ == "__main__":
