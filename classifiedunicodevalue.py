@@ -211,6 +211,7 @@ class ClassifiedDistribution (object):
 class ClassifiedUnicodeValueCache (object):
 	def __init__ (self):
 		self.cache = {}
+		self.cache [None] = ClassifiedUnicodeValue (None)
 	def get (self, value):
 		try:
 			return self.cache [value]

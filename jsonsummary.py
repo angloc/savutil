@@ -13,7 +13,7 @@ class EnhancementWorkbook (object):
 		if mode == "new":
 			if os.path.exists (workbookFilename):
 				raise EnhancementWorkbookError,\
-					"--Can't open workbook: '%s' already exists" %\
+					"Can't open workbook: '%s' already exists" %\
 						workbookFilename
 			self.wb = openpyxl.Workbook ()
 		else:
@@ -22,12 +22,12 @@ class EnhancementWorkbook (object):
 	def save (self):
 		if self.mode == "readonly":
 			raise EnhancementWorkbookError,\
-				"--Can't save read-only workbook: '%s'" %\
+				"Can't save read-only workbook: '%s'" %\
 					self.workbookFilename
 		elif self.mode == "new":
 			if os.path.exists (self.workbookFilename):
 				raise EnhancementWorkbookError,\
-					"--Can't save new workbook: '%s' already exists" %\
+					"Can't save new workbook: '%s' already exists" %\
 						self.workbookFilename
 		self.wb.save (self.workbookFilename)
 			
@@ -70,8 +70,13 @@ if __name__ == "__main__":
 		if not workExt: workExt = ".xlsx"
 	else:
 		workRoot = root
-		workExt = ".xlsx"		
-	ewb = EnhancementWorkbook (workRoot + workExt, "new")
+		workExt = ".xlsx"
+	try:
+		ewb = EnhancementWorkbook (workRoot + workExt, "new")
+	except exceptions.Exception, e:
+		print "--Error: %s" % e
+		sys.exit (0)
+		
 	wb = ewb.wb
 	distributions = wb.active
 	distributions.title = "Input Distributions"
@@ -123,19 +128,42 @@ if __name__ == "__main__":
 					outputCode = code
 				lists.append ((codeListName, outputCode, table [code]))
 
-	distributions.append (("Name", "Frequency", "Measure", "Value"))
+	distributions.append (("Name", "Frequency", "Measure", "Value", "Label"))
+	distributions.append (("", totalCount, "All records"))
 	variableSequence = jsonData ["variable_sequence"]
+	emptyList = {}
 	for variableName in variableSequence:
+		listName = variable.get ("code_list_name")
+		if listName:
+			listObject = jsonData ["code_lists"].get (listName)
+			listTable = listObject ["table"]
+		else:
+			listTable = emptyList
 		variable = jsonData ["variables"] [variableName]
 		jsonType = variable ["json_type"]
 		distribution = variable ["distribution"]
-		if distribution ["frequency_type"] == "empty": continue
-		if distribution ["non_missing_frequency"] != totalCount:
-			distributions.append ((
-				variableName,
-				distribution ["non_missing_frequency"],
-				"Present"
-			))
+		distributions.append ((
+			variableName,
+			"",
+			"Title",
+			variable.get ("title")
+		))
+		distributions.append ((
+			variableName,
+			distribution ["non_missing_frequency"],
+			"Records"
+		))
+		uniqueValue = None
+		if distribution ["frequency_type"] == "constant":
+			uniqueValue = distribution ["min_value"]
+		distributions.append ((
+			variableName,
+			distribution ["frequency_type"],
+			"Distribution",
+			uniqueValue
+		))
+		if distribution ["frequency_type"] == "empty":
+			continue
 		if distribution ["missing_frequency"] != 0:
 			distributions.append ((
 				variableName,
@@ -148,30 +176,35 @@ if __name__ == "__main__":
 				distribution ["unique_values"],
 				"Unique values"
 			))
+			if distribution ["unique_frequency"]:
+				distributions.append ((
+					variableName,
+					distribution ["unique_frequency"],
+					"Unique frequency"
+				))
 			distributions.append ((
 				variableName,
-				distribution ["unique_frequency"],
-				"Unique frequency"
+				distribution ["modal_frequency"],
+				"Mode",
+				distribution ["modal_value"],
+				listTable.get (distribution ["modal_value"])
 			))
-		distributions.append ((
-			variableName,
-			distribution ["modal_frequency"],
-			"Mode",
-			distribution ["modal_value"]
-		))
 		if distribution ["frequency_type"] != "constant":
 			distributions.append ((
 				variableName,
 				None,
 				"Minimum",
-				distribution ["min_value"]
+				distribution ["min_value"],
+				listTable.get (distribution ["min_value"])
 			))
 			distributions.append ((
 				variableName,
 				None,
 				"Maximum",
-				distribution ["max_value"]
+				distribution ["max_value"],
+				listTable.get (distribution ["max_value"])
 			))
+		
 		if distribution ["frequency_type"] == "variable":
 			distributionTable = distribution ["distribution"]
 			keys = distributionTable.keys ()
@@ -179,22 +212,27 @@ if __name__ == "__main__":
 				keys.sort (lambda x, y: cmp (float (x), float (y)))
 			elif jsonType == "integer":
 				keys.sort (lambda x, y: cmp (int (x), int (y)))
-			otherCount = 0
+			else:
+				keys.sort ()
+			listedCount = 0
 			for key in keys:
 				count = distributionTable [key]
 				if jsonType == "decimal":
-					key = float (key) 
+					keyValue = float (key) 
 				elif jsonType == "integer":
-					key = int (key)
+					keyValue = int (key)
+				else:
+					keyValue = key
 				if count > 1:
 					distributions.append ((
 						variableName,
 						count,
 						None,
-						key
+						keyValue,
+						listTable.get (key)
 					))
-				else:
-					otherCount += 1
+				listedCount += count
+			otherCount = distribution ["non_missing_frequency"] - listedCount
 			if otherCount:
 				distributions.append ((
 					variableName,

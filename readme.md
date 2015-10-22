@@ -284,6 +284,17 @@ Maintenance release
 	</li>
 </ul>
 
+### Version 0.1.5: October 22, 2015
+
+Maintenance release
+
+#### Enhancement
+
+<ul>
+	<li>Temporary CSV file created to mitigate memory usage on large files
+	</li>
+</ul>
+
 <h2>Using the source (for Python developers)</h2>
 
 savutil was developed with Python 2.7.

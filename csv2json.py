@@ -32,14 +32,16 @@ if __name__ == "__main__":
 	import json
 	import os
 	import sys
+	import xlrd
 
-	optlist, args = getopt.getopt(sys.argv[1:], 'ad:h:s:e:o:')
+	optlist, args = getopt.getopt(sys.argv[1:], 'ad:h:s:e:o:w:')
 
 	delimiter = ","
 	headerIndex = None
 	skipLines = None
 	encoding = "cp1252"
 	outputPath = ""
+	worksheetName = None
 
 	for (option, value) in optlist:
 		if option == "-d":
@@ -52,6 +54,8 @@ if __name__ == "__main__":
 			outputPath = value
 		if option == "-s":
 			skipLines = int (value)
+		if option == "-w":
+			worksheetName = value
 
 	if skipLines is None:
 		if headerIndex is None:
@@ -64,7 +68,11 @@ if __name__ == "__main__":
 		sys.exit (0)
 
 	(root, csvExt) = os.path.splitext (args [0])
-	if not csvExt: csvExt = ".csv"
+	if not csvExt:
+		if worksheetName:
+			csvExt = ".xlsx"
+		else:
+			csvExt = ".csv"
 	inputFilename = root + csvExt
 
 	if len (args) > 1:
@@ -76,10 +84,21 @@ if __name__ == "__main__":
 		print "..Using line %d for headers" % headerIndex
 	if not (skipLines == 1 and headerIndex == 1):
 		print "..Taking data from line %d onwards" % skipLines
-	csvFile = open (inputFilename)
-	csv = unicodecsv.UnicodeReader (csvFile, encoding=encoding, delimiter=delimiter)
-	csvRows = list (csv)
-	csvFile.close ()
+	if worksheetName:
+		print "..Looking for worksheet '%s' in workbook %s" %\
+			(worksheetName, inputFilename)
+		wb = xlrd.open_workbook (inputFilename)
+		ws = wb.sheet_by_name (worksheetName)
+		print ws.ncols, ws.nrows
+		csvRows = [
+			[ws.cell_value (rowx, colx) for colx in xrange (ws.ncols)]
+			for rowx in xrange (ws.nrows)
+		]
+	else:
+		csvFile = open (inputFilename)
+		csv = unicodecsv.UnicodeReader (csvFile, encoding=encoding, delimiter=delimiter)
+		csvRows = list (csv)
+		csvFile.close ()
 	if skipLines > len (csvRows):
 		print "--Only %d row(s) found in CSV file, %d required for header" %\
 			(len (csvRows), skipLines)

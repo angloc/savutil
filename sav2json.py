@@ -11,9 +11,11 @@
 #	Encoding issues - JSON is output by default as ASCII with individual non-ASCII codes escaped
 
 import exceptions
+import io
 import math
 import re
 import sys
+import tempfile
 
 import datautil
 import savdllwrapper
@@ -44,7 +46,9 @@ SPSSDateFormats = {
 def blankNone (t):
 	if t is not None: return unicode (t)
 	return ""
-	
+
+def noneBlank (s):
+	if len (s.strip ()): return s
 
 def formatDP (v, dp):
 	if v is None:
@@ -78,7 +82,7 @@ def omitMissing (value, treatment, systemMissing=None):
 	if lower is not None and upper is not None:
 		if value < lower or value > upper:
 			return value
-		else:
+		else: 
 			return None
 	return value
 				
@@ -127,8 +131,14 @@ class SAVVariable:
 		return result
 	
 class SAVDataset:
-	def __init__ (self, savFilename, sensibleStringLengths=True):
+	def __init__ (self,
+		savFilename,
+		sensibleStringLengths=True,
+		tempMemory=2**26,
+		windowedValues=2**20):
 		self.savFilename = savFilename
+		self.tempFile = tempfile.SpooledTemporaryFile (tempMemory)
+		self.tempCSVWriter = unicodecsv.writer (self.tempFile, encoding="utf-8")
 		self.cache = classifiedunicodevalue.ClassifiedUnicodeValueCache ()
 		self.sensibleStringLengths = sensibleStringLengths
 		with savdllwrapper.SavHeaderReader(savFilename, ioUtf8=True) as spssDict:
@@ -139,6 +149,8 @@ class SAVDataset:
 		(self.numVars, self.nCases, self.varNames, self.varTypes,
 		 self.formats, self.varLabels, self.valueLabels) = reader.getSavFileInfo()
 		self.valueLabelLists = reader.valueLabelLists
+		self.windowedVariables = windowedValues / self.nCases
+		self.windowStart = None
 		self.nameIndex = {}
 		for index, name in enumerate (self.varNames):
 			self.nameIndex [name] = index
@@ -162,19 +174,21 @@ class SAVDataset:
 		self.dpList = [variable.dp for variable in self.variables]
 			
 		self.records = [None]*self.nCases
-		for caseIndex, record in enumerate (reader):
-			self.records [caseIndex] = [None]*self.numVars
-			for index, col in enumerate (record):
-				self.records [caseIndex] [index] =\
-					formatDP (
-						self.cache.get (
-							omitMissing (
-								col,
-								self.missingValuesList [index]
-						 	)
-						).value,
-					   	self.dpList [index]
-					)
+		#for caseIndex, record in enumerate (reader):
+		#	self.records [caseIndex] = [None]*self.numVars
+		#	for index, col in enumerate (record):
+		#		self.records [caseIndex] [index] =\
+		#			formatDP (
+		#				self.cache.get (
+		#					omitMissing (
+		#						col,
+		#						self.missingValuesList [index]
+		#				 	)
+		#				).value,
+		#			   	self.dpList [index]
+		#)
+		self.writeCSV (self.tempCSVWriter)
+		
 		self.normalisedValueLabels = {}
 		for index, variable in enumerate (self.variables):
 			distribution = {}
@@ -194,6 +208,7 @@ class SAVDataset:
 						normalisedValueLabels [normalisedValue] = label
 				self.normalisedValueLabels [name] = normalisedValueLabels
 			variable.incompleteCoding = False
+			# print "..Distributing %d: %s" % (index, name)
 			for value in self.variableValues (index):
 				if distribution.has_key (value):
 					distribution [value] += 1
@@ -213,11 +228,51 @@ class SAVDataset:
 					variable.jsonType = "string"
 				else:
 					variable.jsonType = "null"
-		del self.cache
+		# del self.cache
 		
 	def variableValues (self, index):
-		return (record [index] for record in self.records)
+		if self.windowStart is None or\
+		   index < self.windowStart or\
+		   index >= self.windowStart + self.windowedVariables:
+			self.tempFile.seek (0)
+			reader = unicodecsv.reader (self.tempFile, encoding="utf-8")
+			self.windowStart = index
+			self.windowedRecords = [
+					record [index:min (index + self.windowedVariables, self.numVars)]
+				for record in reader]
+		return (noneBlank (windowedRecord [index - self.windowStart]) for
+			windowedRecord in self.windowedRecords)
 
+	def writeCSV (self, writer, header=False, interpretCodes=False):
+		def formattedCell (col, index):
+			return formatDP (self.cache.get (omitMissing (
+				col,
+				self.missingValuesList [index])).value,
+				self.dpList [index]
+			)
+		def interpretedCell (value, codeList):
+			if codeList and codeList.get (value):
+				return codeList [value]
+			else:
+				return blankNone (value)
+		if header: writer.writerow (dataset.varNames)
+		codeListList = []
+		for index, variable in enumerate (self.variables):
+			if interpretCodes:
+				codeList = self.normalisedValueLabels.get (variable.name)
+			else:
+				codeList = None
+			codeListList.append (codeList)
+		for caseIndex, record in enumerate (self.reader):
+			outputRecord = [
+					interpretedCell (formattedCell (
+						record [index], index
+					),
+					codeListList [index])
+					for index, col in enumerate (record)
+			]
+			writer.writerow (outputRecord)
+	
 	def toObject (self, includeValues=False):
 		result = {
 			"origin": "sav2json %s from %s" % 
@@ -258,7 +313,7 @@ class SAVDataset:
 		result ["code_lists"] = uniqueLists
 		result ["variable_sequence"] = [variable.name for variable in self.variables]
 		result ["variables"] = {}
-		result ["total_count"] = len (self.records)
+		result ["total_count"] = self.nCases
 		for index, variable in enumerate (self.variables):
 			variableObject = variable.toObject ()
 			variableObject ["sequence"] = index + 1
@@ -336,6 +391,9 @@ if __name__ == "__main__":
 	print "..SAV file encoding is %s" % dataset.originalEncoding
 	print "..%d record(s) in data file" % dataset.nCases
 	print "..%d variable(s) in each record" % len (dataset.varNames)
+	if dataset.windowedVariables < dataset.numVars:
+		print "..Variable output window size is %s" %\
+			dataset.windowedVariables
 	if outputCSV:
 		def interpretedCell (value, codeList):
 			if codeList and codeList.get (value):
@@ -346,17 +404,7 @@ if __name__ == "__main__":
 			CSVFilename = os.path.join (outputPath, root + ".csv")
 			f = open (CSVFilename, "wb")
 			writer = unicodecsv.writer (f, encoding=outputEncoding)
-			if header: writer.writerow (dataset.varNames)
-			codeListList = []
-			for index, variable in enumerate (dataset.variables):
-				if interpretCodes:
-					codeList = dataset.normalisedValueLabels.get (variable.name)
-				else:
-					codeList = None
-				codeListList.append (codeList)					
-			for record in dataset.records:
-				writer.writerow([interpretedCell (col, codeListList [index]) for
-					index, col in enumerate (record)])
+			dataset.writeCSV (writer, header, interpretCodes)
 			print "..CSV data written to %s" % f.name
 			f.close ()
 		except exceptions.Exception, e:
